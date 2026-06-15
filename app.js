@@ -6,20 +6,17 @@ async function loadData() {
     try {
         // Tentiamo di scaricare il file CSV. Se stiamo usando GitHub Pages, questo sarà il path corretto.
         // Se non esiste, mostreremo dei dati vuoti o gestiremo l'errore.
-        const response = await fetch('registro_segnali.csv');
-        if (!response.ok) {
-            throw new Error('File non trovato');
+        const responseSignals = await fetch('registro_segnali.csv');
+        if (responseSignals.ok) {
+            const csvText = await responseSignals.text();
+            Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: function(results) { processData(results.data); } });
         }
         
-        const csvText = await response.text();
-        
-        Papa.parse(csvText, {
-            header: true,
-            skipEmptyLines: true,
-            complete: function(results) {
-                processData(results.data);
-            }
-        });
+        const responsePort = await fetch('portafoglio_virtuale.csv');
+        if (responsePort.ok) {
+            const csvPortText = await responsePort.text();
+            Papa.parse(csvPortText, { header: true, skipEmptyLines: true, complete: function(results) { processPortfolio(results.data); } });
+        }
     } catch (error) {
         console.error('Errore caricamento CSV:', error);
         document.getElementById('totalSignals').innerText = 'Err';
@@ -126,5 +123,27 @@ function renderChart(labels, data) {
                 }
             }
         }
+    });
+}
+
+function processPortfolio(data) {
+    if (data.length === 0) return;
+    
+    const tableBody = document.querySelector('#portfolioTable tbody');
+    tableBody.innerHTML = '';
+    
+    const reversedData = [...data].reverse();
+    
+    reversedData.forEach(row => {
+        const esitoClass = row['Esito Reale'] === 'VINTO' ? 'color: var(--success); font-weight: bold;' : 'color: var(--danger); font-weight: bold;';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${row['Data'].split(' ')[0]}</td>
+            <td><span class="badge">${row['Ticker']}</span></td>
+            <td>${row['Win Rate Previsto']}</td>
+            <td style="${esitoClass}">${row['Esito Reale']}</td>
+            <td style="${esitoClass}">${row['Profitto/Perdita %']}</td>
+        `;
+        tableBody.appendChild(tr);
     });
 }

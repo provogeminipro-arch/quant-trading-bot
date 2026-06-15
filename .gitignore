@@ -1,0 +1,11 @@
+# File di configurazione e segreti
+.env
+iscritti.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac OS
+.DS_Store

@@ -8,6 +8,13 @@ load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+# Advanced API Keys
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+FMP_API_KEY = os.getenv("FMP_API_KEY")
+ALPHAVANTAGE_API_KEY = os.getenv("ALPHAVANTAGE_API_KEY")
+
 # Strategy Parameters
 MIN_WIN_RATE = 65.0  # Percentage
 YEARS_HISTORY = 10
