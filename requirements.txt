@@ -1,0 +1,7 @@
+yfinance==0.2.36
+pandas==2.2.0
+pandas_ta==0.3.14b0
+python-telegram-bot==20.8
+pytz==2024.1
+python-dotenv==1.0.1
+requests==2.31.0

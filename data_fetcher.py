@@ -1,0 +1,49 @@
+import pandas as pd
+import yfinance as yf
+import time
+import config
+
+def get_sp500_tickers():
+    """Scarica la lista aggiornata delle aziende S&P 500 da Wikipedia."""
+    try:
+        table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+        df = table[0]
+        tickers = df['Symbol'].tolist()
+        # Fix tickers that have dots instead of dashes (e.g. BRK.B -> BRK-B)
+        tickers = [t.replace('.', '-') for t in tickers]
+        return tickers
+    except Exception as e:
+        print(f"Errore nel recupero dei ticker: {e}")
+        return []
+
+def get_historical_data(ticker, years=10):
+    """Scarica i dati storici validandone la completezza."""
+    try:
+        end_date = pd.Timestamp.now()
+        start_date = end_date - pd.DateOffset(years=years)
+        
+        # Download data
+        df = yf.download(ticker, start=start_date, end=end_date, progress=False)
+        
+        if df.empty:
+            print(f"{ticker}: Dati vuoti.")
+            return None
+            
+        # Data validation
+        # Circa 252 giorni di borsa in un anno
+        min_required_days = int(252 * (years * 0.9)) # Richiediamo almeno il 90% dei dati attesi
+        if len(df) < min_required_days:
+            print(f"{ticker}: Dati storici incompleti (solo {len(df)} giorni trovati). Scartato.")
+            return None
+            
+        # Drop any row with NaN to ensure genuine data
+        df = df.dropna()
+        
+        # Verifica se ci sono state colonne importate come MultiIndex (nuove versioni yfinance)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.droplevel(1)
+            
+        return df
+    except Exception as e:
+        print(f"Errore durante il download dei dati per {ticker}: {e}")
+        return None
