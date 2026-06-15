@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- CONFIGURAZIONE DI BASE ---
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN') # Ora caricato da variabile d'ambiente
+TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_TOKEN', os.getenv('TELEGRAM_BOT_TOKEN')) # Ora caricato da variabile d'ambiente
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')     # Ora caricato da variabile d'ambiente
 
 # Advanced API Keys
@@ -26,4 +26,4 @@ HOLDING_PERIOD_DAYS = 5
 
 # System Parameters
 PAUSE_BETWEEN_STOCKS = 0.5  # Seconds to pause between Yahoo Finance calls
-TOP_STOCKS_COUNT = 500  # Number of top stocks to fetch by volume
+TOP_STOCKS_COUNT = 150 # Quante aziende S&P 500 analizzare

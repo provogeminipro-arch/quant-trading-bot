@@ -7,7 +7,7 @@ SUBSCRIBERS_FILE = 'iscritti.json'
 
 def update_subscribers():
     """Legge i nuovi messaggi dal bot e salva chi ha scritto /start"""
-    url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/getUpdates"
+    url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/getUpdates"
     
     # Carica iscritti esistenti
     subscribers = set()
@@ -58,7 +58,7 @@ def send_alert(ticker, win_rate, past_cases, buy_price, target_price, time_out_s
     )
     
     for chat_id in subscribers:
-        url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": chat_id,
             "text": message,
@@ -75,7 +75,7 @@ def send_general_message(text):
     """Invia un messaggio di testo libero a tutti (es. blocco per sentiment negativo)"""
     subscribers = update_subscribers()
     for chat_id in subscribers:
-        url = f"https://api.telegram.org/bot{config.TELEGRAM_TOKEN}/sendMessage"
+        url = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}/sendMessage"
         payload = {
             "chat_id": chat_id,
             "text": text,
