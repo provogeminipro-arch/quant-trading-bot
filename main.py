@@ -21,11 +21,17 @@ def main():
     
     # 1. Analisi Geopolitica e Macro tramite Gemini AI + Finnhub
     print("\nControllo Macro-Economico e Geopolitico in corso...")
-    is_safe, reason = get_macro_sentiment()
+    is_safe, reason, news_summary = get_macro_sentiment()
     print(f"Esito AI: {'SICURO' if is_safe else 'BLOCCO'} - Motivo: {reason}")
     
     if not is_safe:
-        warning_msg = f"⛔️ <b>TRADING BLOCCATO OGGI</b> ⛔️\n\nL'Intelligenza Artificiale ha bloccato gli acquisti a causa di un grave rischio macroeconomico:\n\n<i>{reason}</i>\n\nProtezione del capitale attivata."
+        warning_msg = (
+            f"⛔️ <b>TRADING BLOCCATO OGGI</b> ⛔️\n\n"
+            f"L'Intelligenza Artificiale ha bloccato gli acquisti a causa di un grave rischio macroeconomico:\n"
+            f"<i>{reason}</i>\n\n"
+            f"🌍 <b>Flash News Sintetiche dal Mondo:</b>\n{news_summary}\n\n"
+            f"Protezione del capitale attivata."
+        )
         print("Operatività sospesa. Inviando notifica agli iscritti...")
         send_general_message(warning_msg)
         return # Ferma tutto lo script
@@ -39,6 +45,8 @@ def main():
         return
         
     tickers = tickers[:config.TOP_STOCKS_COUNT]
+    
+    segnali_trovati = 0
     
     for ticker in tickers:
         print(f"\nAnalizzo {ticker}...")
@@ -56,6 +64,7 @@ def main():
             
             # 5. Verifica filtro win rate
             if win_rate >= config.MIN_WIN_RATE:
+                segnali_trovati += 1
                 timeout_date = now_it + timedelta(days=7)
                 timeout_str = timeout_date.replace(hour=21, minute=55).strftime('%d/%m/%Y alle %H:%M')
                 
@@ -82,6 +91,17 @@ def main():
                 print(f"[{ticker}] Scartato: Win Rate {win_rate:.1f}% è inferiore al minimo richiesto.")
         
         time.sleep(config.PAUSE_BETWEEN_STOCKS)
+        
+    # Se non è stato trovato nessun segnale oggi, mandiamo il Daily Report di "Buonanotte"
+    if segnali_trovati == 0:
+        report_msg = (
+            f"📊 <b>REPORT GIORNALIERO BOT</b>\n\n"
+            f"Analisi su {len(tickers)} titoli completata.\n"
+            f"Nessun segnale ad alta probabilità (>={config.MIN_WIN_RATE}%) rilevato per oggi.\n\n"
+            f"🌍 <b>Flash News Macroeconomiche:</b>\n{news_summary}\n\n"
+            f"Ci aggiorniamo a domani! 💤"
+        )
+        send_general_message(report_msg)
         
     print("\nAnalisi completata!")
 

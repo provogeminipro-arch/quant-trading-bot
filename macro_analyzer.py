@@ -33,43 +33,46 @@ def get_macro_sentiment():
     # 2. Usa Gemini AI per analizzare il sentiment
     try:
         genai.configure(api_key=config.GEMINI_API_KEY)
-        # Scegliamo il modello pro
         model = genai.GenerativeModel('gemini-pro')
         
         prompt = f"""
         Agisci come un Risk Manager per un fondo di investimento azionario quantitativo (NASDAQ e S&P 500).
-        Il mio algoritmo sta per inviare dei segnali di acquisto "long" (rialzisti) che dureranno 5 giorni.
-        
         Di seguito trovi le notizie finanziarie e geopolitiche di oggi:
         {news_text}
         
-        Valuta il rischio macro-economico globale. C'è il rischio imminente di un crollo (crash) di mercato a causa di:
-        - Guerre o gravi escalation geopolitiche fresche di giornata
-        - Crisi bancarie improvvise
-        - Annunci disastrosi su tassi di interesse o inflazione
+        Valuta il rischio macro-economico globale. C'è il rischio imminente di un crollo (crash) di mercato a causa di guerre, pandemie o crisi finanziarie?
         
-        Rispondi ESATTAMENTE e SOLO con una di queste due stringhe JSON:
-        {{"decision": "PROCEED", "reason": "breve motivazione..."}}
-        oppure
-        {{"decision": "BLOCK", "reason": "breve motivazione sul panico in corso..."}}
+        Devi rispondere ESATTAMENTE e SOLO con un oggetto JSON valido (senza backtick o formattazioni Markdown), avente questa precisa struttura:
+        {{
+            "decision": "PROCEED" oppure "BLOCK",
+            "reason": "motivo della decisione in una frase",
+            "news_summary": "Un riassunto SINTETICO in ITALIANO (max 3 punti elenco, usa le emoji) delle notizie più rilevanti di oggi."
+        }}
         """
         
         response = model.generate_content(prompt)
-        ai_text = response.text.strip().strip('`').replace('json', '').strip()
+        ai_text = response.text.strip()
+        # Pulisci eventuali formattazioni markdown restituite dall'AI
+        if ai_text.startswith("```json"):
+            ai_text = ai_text[7:]
+        if ai_text.endswith("```"):
+            ai_text = ai_text[:-3]
+        ai_text = ai_text.strip()
         
         import json
         decision_data = json.loads(ai_text)
         
+        news_summary = decision_data.get("news_summary", "")
+        
         if decision_data.get("decision") == "BLOCK":
-            return False, decision_data.get("reason", "Condizioni macro avverse")
+            return False, decision_data.get("reason", "Condizioni macro avverse"), news_summary
         else:
-            return True, decision_data.get("reason", "Condizioni macro stabili")
+            return True, decision_data.get("reason", "Condizioni macro stabili"), news_summary
             
     except Exception as e:
         print(f"Errore Gemini AI: {e}")
-        return True, "Impossibile analizzare il sentiment tramite AI"
+        return True, "Impossibile analizzare il sentiment tramite AI", "Nessuna notizia disponibile."
 
 if __name__ == "__main__":
-    # Test locale
-    is_safe, reason = get_macro_sentiment()
-    print(f"Safe to trade? {is_safe}\nReason: {reason}")
+    is_safe, reason, summary = get_macro_sentiment()
+    print(f"Safe to trade? {is_safe}\nReason: {reason}\nSummary:\n{summary}")
