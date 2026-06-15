@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quant Trading Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <main class="container">
+        <header class="glass-panel">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                </div>
+                <h1>QuantBot <span class="accent">Terminal</span></h1>
+            </div>
+            <div class="status-indicator">
+                <span class="pulse"></span> System Online
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="stat-card glass-panel">
+                <h3>Segnali Totali</h3>
+                <p id="totalSignals" class="stat-value">0</p>
+                <div class="stat-trend">+100% attivi</div>
+            </div>
+            <div class="stat-card glass-panel">
+                <h3>Ultimo Segnale</h3>
+                <p id="lastSignalDate" class="stat-value text-small">N/D</p>
+                <div class="stat-trend">Data rilevamento</div>
+            </div>
+            <div class="stat-card glass-panel highlight">
+                <h3>Win Rate Medio</h3>
+                <p id="avgWinRate" class="stat-value">0%</p>
+                <div class="stat-trend">Sui setup generati</div>
+            </div>
+        </section>
+
+        <div class="content-grid">
+            <section class="chart-section glass-panel">
+                <div class="section-header">
+                    <h2>Distribuzione Win Rate</h2>
+                    <p class="subtitle">Analisi storica dei segnali approvati (>65%)</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="winRateChart"></canvas>
+                </div>
+            </section>
+
+            <section class="table-section glass-panel">
+                <div class="section-header">
+                    <h2>Ultimi Segnali Registrati</h2>
+                    <p class="subtitle">Tabella in tempo reale dal CSV</p>
+                </div>
+                <div class="table-wrapper">
+                    <table id="signalsTable">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Ticker</th>
+                                <th>Win Rate</th>
+                                <th>Casi</th>
+                                <th>Buy ($)</th>
+                                <th>Target ($)</th>
+                                <th>Time Out</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dati popolati da JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
