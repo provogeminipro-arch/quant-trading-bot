@@ -4,15 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadData() {
     try {
-        // Tentiamo di scaricare il file CSV. Se stiamo usando GitHub Pages, questo sarà il path corretto.
-        // Se non esiste, mostreremo dei dati vuoti o gestiremo l'errore.
-        const responseSignals = await fetch('registro_segnali.csv');
+        const timestamp = new Date().getTime();
+        
+        // Aggiungiamo il timestamp per evitare che il browser metta in cache i vecchi CSV
+        const responseSignals = await fetch('registro_segnali.csv?t=' + timestamp);
         if (responseSignals.ok) {
             const csvText = await responseSignals.text();
             Papa.parse(csvText, { header: true, skipEmptyLines: true, complete: function(results) { processData(results.data); } });
         }
         
-        const responsePort = await fetch('portafoglio_virtuale.csv');
+        const responsePort = await fetch('portafoglio_virtuale.csv?t=' + timestamp);
         if (responsePort.ok) {
             const csvPortText = await responsePort.text();
             Papa.parse(csvPortText, { header: true, skipEmptyLines: true, complete: function(results) { processPortfolio(results.data); } });
