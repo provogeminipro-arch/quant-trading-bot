@@ -6,7 +6,12 @@ import config
 def get_sp500_tickers():
     """Scarica la lista aggiornata delle aziende S&P 500 da Wikipedia."""
     try:
-        table = pd.read_html('https://en.wikipedia.org/wiki/List_of_S%26P_500_companies')
+        import requests
+        from io import StringIO
+        url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        html = requests.get(url, headers=headers).text
+        table = pd.read_html(StringIO(html))
         df = table[0]
         tickers = df['Symbol'].tolist()
         # Fix tickers that have dots instead of dashes (e.g. BRK.B -> BRK-B)

@@ -8,7 +8,7 @@ import config
 from data_fetcher import get_sp500_tickers, get_historical_data
 from strategy_tester import test_strategy
 from telegram_notifier import send_alert, send_general_message
-from macro_analyzer import get_macro_sentiment
+from macro_analyzer import get_macro_sentiment, get_ticker_sentiment
 from analytics import aggiorna_portafoglio
 
 def main():
@@ -64,6 +64,17 @@ def main():
             
             # 5. Verifica filtro win rate
             if win_rate >= config.MIN_WIN_RATE:
+                
+                # 6. Intelligenza Artificiale Specifica (Value Trap Check)
+                print(f"[{ticker}] Win Rate OK ({win_rate:.1f}%). Consulto l'AI per Value Trap...")
+                is_safe_ticker, reason_ticker = get_ticker_sentiment(ticker)
+                
+                if not is_safe_ticker:
+                    print(f"[{ticker}] SEGNALE BLOCCATO DALL'AI: {reason_ticker}")
+                    continue
+                    
+                print(f"[{ticker}] AI approva il trade. Invio segnale.")
+                
                 segnali_trovati += 1
                 timeout_date = now_it + timedelta(days=7)
                 timeout_str = timeout_date.replace(hour=21, minute=55).strftime('%d/%m/%Y alle %H:%M')

@@ -26,8 +26,16 @@ def test_strategy(df):
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     df['ATR'] = tr.rolling(window=14).mean()
     
-    # 3. SMA 200
+    # 3. SMA 200 (Prezzo)
     df['SMA_200'] = df['Close'].rolling(window=200).mean()
+    
+    # 4. SMA Volume 20 (Filtro Volumi)
+    df['SMA_Volume'] = df['Volume'].rolling(window=20).mean()
+    
+    # 5. Bollinger Bands (20, 2)
+    sma_20 = df['Close'].rolling(window=20).mean()
+    std_20 = df['Close'].rolling(window=20).std()
+    df['BB_Lower'] = sma_20 - (2 * std_20)
     
     df = df.dropna()
     
@@ -42,7 +50,18 @@ def test_strategy(df):
     # 2. Ieri RSI < 30 (Ipervenduto)
     # 3. Oggi RSI > Ieri RSI (in risalita)
     # 4. Oggi Low >= Ieri Low (tiene i minimi)
-    df['Trigger'] = (df['Close'] > df['SMA_200']) & (df['Prev_RSI'] < 30) & (df['RSI'] > df['Prev_RSI']) & (df['Low'] >= df['Prev_Low'])
+    # 5. Volume > SMA Volume (Interesse istituzionale)
+    # 6. Candela Verde: Close > Open (Conferma compratori)
+    # 7. Elastico: Prezzo sotto o che tocca la banda inferiore di Bollinger
+    df['Trigger'] = (
+        (df['Close'] > df['SMA_200']) & 
+        (df['Prev_RSI'] < 30) & 
+        (df['RSI'] > df['Prev_RSI']) & 
+        (df['Low'] >= df['Prev_Low']) & 
+        (df['Volume'] > df['SMA_Volume']) &
+        (df['Close'] > df['Open']) &
+        (df['Low'] <= df['BB_Lower'])
+    )
     
     trigger_dates = df[df['Trigger']].index
     
@@ -62,7 +81,7 @@ def test_strategy(df):
             continue
             
         buy_price = df.iloc[idx]['Close']
-        target_price = buy_price + (1.5 * df.iloc[idx]['ATR'])
+        target_price = buy_price + (2.0 * df.iloc[idx]['ATR']) # Target raddoppiato (V4)
         stop_loss = buy_price - (1.0 * df.iloc[idx]['ATR'])
         
         total_trades += 1
@@ -84,7 +103,7 @@ def test_strategy(df):
     # Verifichiamo se OGGI si è acceso il segnale
     if df.iloc[-1]['Trigger']:
         current_buy_price = df.iloc[-1]['Close']
-        current_target_price = current_buy_price + (1.5 * df.iloc[-1]['ATR'])
+        current_target_price = current_buy_price + (2.0 * df.iloc[-1]['ATR']) # Target raddoppiato (V4)
         return win_rate, total_trades, current_buy_price, current_target_price
         
     return None
