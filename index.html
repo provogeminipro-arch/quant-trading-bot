@@ -47,30 +47,59 @@
                 <div class="stat-trend">Ricevono segnali su Telegram</div>
             </div>
             <div class="stat-card glass-panel">
-                <h3>Segnali Totali</h3>
-                <p id="totalSignals" class="stat-value">0</p>
-                <div class="stat-trend">+100% attivi</div>
-            </div>
-            <div class="stat-card glass-panel">
                 <h3>Ultimo Segnale</h3>
                 <p id="lastSignalDate" class="stat-value text-small">N/D</p>
                 <div class="stat-trend">Data rilevamento</div>
             </div>
             <div class="stat-card glass-panel highlight">
-                <h3>Win Rate Medio</h3>
-                <p id="avgWinRate" class="stat-value">0%</p>
-                <div class="stat-trend">Sui setup generati</div>
+                <h3>Win Rate Reale</h3>
+                <p id="realWinRate" class="stat-value">0%</p>
+                <div class="stat-trend">Sui trade conclusi</div>
+            </div>
+            <div class="stat-card glass-panel highlight">
+                <h3>Profitto Netto</h3>
+                <p id="totalProfit" class="stat-value">0%</p>
+                <div class="stat-trend">Cumulato storico</div>
+            </div>
+        </section>
+
+        <section class="info-section glass-panel" style="margin-bottom: 2rem;">
+            <div class="section-header">
+                <h2>🤖 Come funziona QuantBot?</h2>
+                <p class="subtitle">Intelligenza Artificiale e Analisi Quantitativa al servizio del tuo portafoglio.</p>
+            </div>
+            <div class="info-grid">
+                <div class="info-card">
+                    <div class="info-icon">📈</div>
+                    <h4>Strategia Mean-Reversion</h4>
+                    <p>L'algoritmo scansiona giornalmente i migliori titoli del NASDAQ e S&P 500 cercando azioni solide che hanno subito un calo irrazionale (ipervenduto RSI) ma che mostrano segni di un rimbalzo immediato.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">🧠</div>
+                    <h4>Filtro Macroeconomico AI</h4>
+                    <p>Prima di ogni operazione, l'IA (Gemini Pro) analizza le notizie mondiali in tempo reale. Se rileva rischio di crolli di mercato (es. guerre o crisi bancarie), blocca l'operatività per proteggere il capitale.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">⏱️</div>
+                    <h4>Operatività Veloce</h4>
+                    <p>Il sistema non tiene il capitale bloccato per mesi. Ogni trade ha un obiettivo matematico basato sulla volatilità (ATR) e scade automaticamente entro 5 giorni di borsa aperta.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon">📊</div>
+                    <h4>Massima Trasparenza</h4>
+                    <p>Questa dashboard certifica tutto. Oltre ai segnali in corso, la tabella "Portafoglio Reale" traccia l'esito reale (Vinto/Perso) di ogni operazione passata senza nascondere i trade in perdita.</p>
+                </div>
             </div>
         </section>
 
         <div class="content-grid">
             <section class="chart-section glass-panel">
                 <div class="section-header">
-                    <h2>Distribuzione Win Rate</h2>
-                    <p class="subtitle">Analisi storica dei segnali approvati (>65%)</p>
+                    <h2>Curva dei Profitti Storici</h2>
+                    <p class="subtitle">Crescita del capitale sulle operazioni chiuse</p>
                 </div>
                 <div class="chart-container">
-                    <canvas id="winRateChart"></canvas>
+                    <canvas id="portfolioChart"></canvas>
                 </div>
             </section>
 
@@ -122,6 +151,12 @@
                 </div>
             </section>
         </div>
+
+        <footer class="disclaimer glass-panel" style="margin-top: 2rem; padding: 1.5rem; text-align: center;">
+            <p style="color: var(--text-muted); font-size: 0.8rem; line-height: 1.5;">
+                <strong>⚠️ DISCLAIMER LEGALE E FINANZIARIO:</strong> Le informazioni, i segnali e i dati mostrati su questo sito web e inviati tramite Telegram sono generati automaticamente da un algoritmo sperimentale e da modelli di Intelligenza Artificiale a puro scopo didattico, informativo e di ricerca. <strong>Non costituiscono in alcun modo consulenza finanziaria, sollecitazione al pubblico risparmio o suggerimento di investimento.</strong> Il trading sui mercati finanziari comporta un elevato grado di rischio e può portare alla perdita dell'intero capitale investito. Le performance passate (reali o simulate) mostrate su questa dashboard non sono garanzia di risultati futuri. L'utente si assume la piena e totale responsabilità delle proprie scelte finanziarie e delle conseguenze che ne derivano. Il creatore di questo software declina ogni responsabilità per eventuali perdite o danni causati dall'utilizzo delle informazioni fornite.
+            </p>
+        </footer>
     </main>
 
     <script src="app.js"></script>

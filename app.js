@@ -39,7 +39,7 @@ async function loadData() {
 function processData(data) {
     if (data.length === 0) return;
 
-    // Aggiornamento Metriche
+    // Aggiornamento Metriche base
     document.getElementById('totalSignals').innerText = data.length;
     
     const lastRow = data[data.length - 1];
@@ -47,28 +47,13 @@ function processData(data) {
     const lastDate = lastRow['Data'].split(' ')[0];
     document.getElementById('lastSignalDate').innerText = lastDate;
 
-    let totalWinRate = 0;
-    const chartLabels = [];
-    const chartData = [];
-
-    // Prepara la tabella (dal più recente al più vecchio)
+    // Prepara la tabella Segnali (dal più recente al più vecchio)
     const tableBody = document.querySelector('#signalsTable tbody');
     tableBody.innerHTML = '';
 
     const reversedData = [...data].reverse();
 
     reversedData.forEach((row, index) => {
-        // Pulizia Win Rate string (es. "68.5%") -> Number
-        const wrStr = row['Win Rate'].replace('%', '');
-        const wrNum = parseFloat(wrStr);
-        totalWinRate += wrNum;
-
-        // Dati per il grafico (prendiamo gli ultimi 15 per non affollarlo)
-        if (index < 15) {
-            chartLabels.unshift(row['Ticker']);
-            chartData.unshift(wrNum);
-        }
-
         // Creazione riga tabella
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -82,31 +67,92 @@ function processData(data) {
         `;
         tableBody.appendChild(tr);
     });
-
-    const avg = (totalWinRate / data.length).toFixed(1);
-    document.getElementById('avgWinRate').innerText = `${avg}%`;
-
-    renderChart(chartLabels, chartData);
 }
 
-function renderChart(labels, data) {
-    const ctx = document.getElementById('winRateChart').getContext('2d');
+function processPortfolio(data) {
+    if (data.length === 0) return;
     
-    // Gradiente per la barra
+    const tableBody = document.querySelector('#portfolioTable tbody');
+    tableBody.innerHTML = '';
+    
+    let totalTrades = 0;
+    let wonTrades = 0;
+    let cumulativeProfit = 0;
+    
+    const chartLabels = [];
+    const chartData = [];
+    
+    // Ordiniamo cronologicamente (il CSV è già in ordine cronologico dall'alto al basso)
+    data.forEach(row => {
+        if (!row['Esito Reale']) return; // Skip righe vuote
+        
+        totalTrades++;
+        if (row['Esito Reale'] === 'VINTO') wonTrades++;
+        
+        const profStr = row['Profitto/Perdita %'].replace('%', '');
+        const profNum = parseFloat(profStr);
+        cumulativeProfit += profNum;
+        
+        // Punti per il grafico
+        chartLabels.push(row['Ticker']);
+        chartData.push(cumulativeProfit.toFixed(2));
+    });
+    
+    // Scrivi Statistiche in Dashboard
+    const realWinRate = totalTrades > 0 ? ((wonTrades / totalTrades) * 100).toFixed(1) : 0;
+    document.getElementById('realWinRate').innerText = `${realWinRate}%`;
+    
+    const profitColor = cumulativeProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    const sign = cumulativeProfit > 0 ? '+' : '';
+    document.getElementById('totalProfit').innerText = `${sign}${cumulativeProfit.toFixed(2)}%`;
+    document.getElementById('totalProfit').style.color = profitColor;
+    
+    // Prepara la tabella Portafoglio (dal più recente al più vecchio)
+    const reversedData = [...data].reverse();
+    
+    reversedData.forEach(row => {
+        if (!row['Esito Reale']) return;
+        const esitoClass = row['Esito Reale'] === 'VINTO' ? 'color: var(--success); font-weight: bold;' : 'color: var(--danger); font-weight: bold;';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${row['Data'].split(' ')[0]}</td>
+            <td><span class="badge">${row['Ticker']}</span></td>
+            <td>${row['Win Rate Previsto']}</td>
+            <td style="${esitoClass}">${row['Esito Reale']}</td>
+            <td style="${esitoClass}">${row['Profitto/Perdita %']}</td>
+        `;
+        tableBody.appendChild(tr);
+    });
+    
+    // Disegna il grafico storico dei profitti
+    renderPortfolioChart(chartLabels, chartData);
+}
+
+function renderPortfolioChart(labels, data) {
+    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    
+    // Gradiente per l'area sotto la curva
     const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gradient.addColorStop(0, 'rgba(0, 255, 204, 0.8)');
-    gradient.addColorStop(1, 'rgba(0, 255, 204, 0.1)');
+    gradient.addColorStop(0, 'rgba(0, 255, 204, 0.4)');
+    gradient.addColorStop(1, 'rgba(0, 255, 204, 0.0)');
 
     new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Win Rate %',
+                label: 'Profitto Cumulato %',
                 data: data,
+                borderColor: '#00ffcc',
                 backgroundColor: gradient,
-                borderRadius: 6,
-                borderWidth: 0,
+                borderWidth: 3,
+                tension: 0.4, // Curva morbida
+                fill: true,
+                pointBackgroundColor: '#141419',
+                pointBorderColor: '#00ffcc',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
             }]
         },
         options: {
@@ -120,15 +166,24 @@ function renderChart(labels, data) {
                     bodyFont: { family: 'JetBrains Mono', size: 14 },
                     padding: 12,
                     borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(context) {
+                            return ` ${context.parsed.y}%`;
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
-                    min: 50,
-                    max: 100,
                     grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#888899', font: { family: 'JetBrains Mono' } }
+                    ticks: { 
+                        color: '#888899', 
+                        font: { family: 'JetBrains Mono' },
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
                 },
                 x: {
                     grid: { display: false },
@@ -136,27 +191,5 @@ function renderChart(labels, data) {
                 }
             }
         }
-    });
-}
-
-function processPortfolio(data) {
-    if (data.length === 0) return;
-    
-    const tableBody = document.querySelector('#portfolioTable tbody');
-    tableBody.innerHTML = '';
-    
-    const reversedData = [...data].reverse();
-    
-    reversedData.forEach(row => {
-        const esitoClass = row['Esito Reale'] === 'VINTO' ? 'color: var(--success); font-weight: bold;' : 'color: var(--danger); font-weight: bold;';
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row['Data'].split(' ')[0]}</td>
-            <td><span class="badge">${row['Ticker']}</span></td>
-            <td>${row['Win Rate Previsto']}</td>
-            <td style="${esitoClass}">${row['Esito Reale']}</td>
-            <td style="${esitoClass}">${row['Profitto/Perdita %']}</td>
-        `;
-        tableBody.appendChild(tr);
     });
 }
