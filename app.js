@@ -40,12 +40,14 @@ function processData(data) {
     if (data.length === 0) return;
 
     // Aggiornamento Metriche base
-    document.getElementById('totalSignals').innerText = data.length;
+    const totalSignalsEl = document.getElementById('totalSignals');
+    if (totalSignalsEl) totalSignalsEl.innerText = data.length;
     
     const lastRow = data[data.length - 1];
     // Estrai solo la data ignorando l'ora per la UI
-    const lastDate = lastRow['Data'].split(' ')[0];
-    document.getElementById('lastSignalDate').innerText = lastDate;
+    const lastDate = lastRow ? lastRow['Data'].split(' ')[0] : 'N/D';
+    const lastSignalDateEl = document.getElementById('lastSignalDate');
+    if (lastSignalDateEl) lastSignalDateEl.innerText = lastDate;
 
     // Prepara la tabella Segnali (dal più recente al più vecchio)
     const tableBody = document.querySelector('#signalsTable tbody');
