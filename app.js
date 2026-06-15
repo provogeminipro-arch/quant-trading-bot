@@ -17,6 +17,19 @@ async function loadData() {
             const csvPortText = await responsePort.text();
             Papa.parse(csvPortText, { header: true, skipEmptyLines: true, complete: function(results) { processPortfolio(results.data); } });
         }
+        
+        try {
+            const responseSub = await fetch('iscritti.json');
+            if (responseSub.ok) {
+                const subscribers = await responseSub.json();
+                document.getElementById('totalSubscribers').innerText = subscribers.length;
+            } else {
+                document.getElementById('totalSubscribers').innerText = '1 (Tu)';
+            }
+        } catch(e) {
+            document.getElementById('totalSubscribers').innerText = '1 (Tu)';
+        }
+        
     } catch (error) {
         console.error('Errore caricamento CSV:', error);
         document.getElementById('totalSignals').innerText = 'Err';

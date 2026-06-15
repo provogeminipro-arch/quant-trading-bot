@@ -125,6 +125,38 @@ h1 {
     text-shadow: 0 0 10px var(--accent-glow);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.telegram-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+    color: white;
+    text-decoration: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(42, 171, 238, 0.3);
+}
+
+.telegram-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.telegram-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(42, 171, 238, 0.5);
+    background: linear-gradient(135deg, #32B3F6 0%, #29A5E0 100%);
+}
+
 .status-indicator {
     display: flex;
     align-items: center;
@@ -156,7 +188,7 @@ h1 {
 /* Stats Grid */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
