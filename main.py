@@ -78,14 +78,44 @@ def main():
             continue
             
         # 4. Testa strategia e calcola win rate
-        result = test_strategy(df)
-        if result:
-            win_rate, past_cases, buy_price, target_price = result
+        risultato = test_strategy(df)
+        
+        if risultato:
+            win_rate, past_cases, buy_price, target_price, features = risultato
+            print(f"!!! SEGNALE TROVATO SU {ticker} !!!")
+            print(f"Storico: {win_rate:.1f}% Win Rate su {past_cases} casi simili.")
             
-            # 5. Verifica filtro win rate
+            # 5. Machine Learning Prediction
+            try:
+                import os
+                import joblib
+                from ml_trainer import train_model
+                
+                if not os.path.exists('ml_model.joblib'):
+                    print("\n[AI] Modello ML non trovato. Avvio addestramento dinamico sul Cloud...")
+                    train_model()
+                
+                if os.path.exists('ml_model.joblib'):
+                    model = joblib.load('ml_model.joblib')
+                    # Prepara le feature nell'ordine giusto
+                    X_new = [[features['RSI'], features['BB_Width'], features['Dist_SMA200'], features['Dist_BBLower'], features['Volume_Ratio']]]
+                    
+                    import pandas as pd
+                    X_df = pd.DataFrame(X_new, columns=['RSI', 'BB_Width', 'Dist_SMA200', 'Dist_BBLower', 'Volume_Ratio'])
+                    
+                    prob_win = model.predict_proba(X_df)[0][1] # Probabilità della classe 1 (Vittoria)
+                    print(f"[AI] Probabilità predittiva di successo (Machine Learning): {prob_win*100:.1f}%")
+                    
+                    if prob_win < 0.60:
+                        print(f"Scartato dall'Intelligenza Artificiale (Probabilità < 60%).")
+                        continue
+            except Exception as e:
+                print(f"Errore durante l'analisi ML: {e}")
+                
+            # 6. Verifica filtro win rate storico
             if win_rate >= config.MIN_WIN_RATE:
                 
-                # 6. Intelligenza Artificiale Specifica (Value Trap Check)
+                # 7. Intelligenza Artificiale Specifica (Value Trap Check)
                 print(f"[{ticker}] Win Rate OK ({win_rate:.1f}%). Consulto l'AI per Value Trap...")
                 is_safe_ticker, reason_ticker = get_ticker_sentiment(ticker)
                 
