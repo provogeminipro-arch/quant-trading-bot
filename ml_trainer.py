@@ -47,6 +47,7 @@ def generate_training_data():
     
     for ticker in tickers:
         print(f"Estrazione dati storici: {ticker}")
+        time.sleep(0.5)  # Pausa anti rate-limit Yahoo Finance
         df = yf.download(ticker, start=start_date, end=end_date, progress=False)
         if df.empty: continue
         
@@ -66,9 +67,6 @@ def generate_training_data():
                 # Estraiamo i giorni successivi
                 future_prices = df.loc[idx:].iloc[1:11] # Prossimi 10 giorni
                 if future_prices.empty: continue
-                
-                max_future_high = future_prices['High'].max()
-                min_future_low = future_prices['Low'].min()
                 
                 # Regola del backtest: Target +5%, Stop Loss -3%
                 target_price = row['Close'] * 1.05
