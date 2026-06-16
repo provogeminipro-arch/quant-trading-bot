@@ -21,6 +21,27 @@ def get_sp500_tickers():
         print(f"Errore nel recupero dei ticker: {e}")
         return []
 
+def get_sp500_with_sectors():
+    """Scarica la lista delle aziende S&P 500 con il rispettivo GICS Sector."""
+    try:
+        import requests
+        from io import StringIO
+        url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        html = requests.get(url, headers=headers).text
+        table = pd.read_html(StringIO(html))
+        df = table[0]
+        # Return a dictionary: {'AAPL': 'Information Technology', ...}
+        sector_map = {}
+        for _, row in df.iterrows():
+            ticker = row['Symbol'].replace('.', '-')
+            sector = row['GICS Sector']
+            sector_map[ticker] = sector
+        return sector_map
+    except Exception as e:
+        print(f"Errore nel recupero dei settori: {e}")
+        return {}
+
 def get_historical_data(ticker, years=10):
     """Scarica i dati storici validandone la completezza."""
     try:

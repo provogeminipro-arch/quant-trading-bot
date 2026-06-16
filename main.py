@@ -5,10 +5,12 @@ from datetime import datetime, timedelta
 import pytz
 
 import config
-from data_fetcher import get_sp500_tickers, get_historical_data
+from data_fetcher import get_sp500_tickers, get_historical_data, get_sp500_with_sectors
 from strategy_tester import test_strategy
 from telegram_notifier import send_alert, send_general_message
 from macro_analyzer import get_macro_sentiment, get_ticker_sentiment
+from analytics import aggiorna_portafoglio
+from sector_analyzer import get_strong_sectors
 from analytics import aggiorna_portafoglio
 
 def main():
@@ -36,20 +38,38 @@ def main():
         send_general_message(warning_msg)
         return # Ferma tutto lo script
         
+    # Allarme API
+    if reason == "Impossibile analizzare il sentiment tramite AI":
+        send_general_message("⚠️ <b>ALLARME API:</b> Errore di comunicazione con Google Gemini. Possibile quota esaurita o chiave invalida. Le Flash News sono disattivate temporaneamente.")
+
     print("\nCondizioni di mercato stabili. Procedo con lo scan dei titoli...")
 
-    # 2. Scarica i ticker
-    tickers = get_sp500_tickers()
-    if not tickers:
+    # 1.5. Rotazione Settoriale
+    strong_sectors = get_strong_sectors()
+    if not strong_sectors:
+        print("NESSUN settore in trend rialzista! Mercato in crollo generale.")
+        send_general_message("⚠️ <b>MERCATO DEBOLE:</b> Nessun settore è in trend rialzista (Tutti gli ETF sotto SMA200). Blocco acquisti azionari preventivo.")
+        return
+        
+    print(f"Settori Forti ammessi per l'acquisto: {', '.join(strong_sectors)}")
+
+    # 2. Scarica i ticker con i relativi settori
+    ticker_sectors = get_sp500_with_sectors()
+    if not ticker_sectors:
         print("Impossibile recuperare i ticker.")
         return
         
-    tickers = tickers[:config.TOP_STOCKS_COUNT]
+    tickers = list(ticker_sectors.keys())[:config.TOP_STOCKS_COUNT]
     
     segnali_trovati = 0
     
     for ticker in tickers:
-        print(f"\nAnalizzo {ticker}...")
+        sector = ticker_sectors.get(ticker, "Unknown")
+        print(f"\nAnalizzo {ticker} [{sector}]...")
+        
+        if sector not in strong_sectors:
+            print(f"Scartato: il settore {sector} è attualmente DEBOLE e in trend ribassista.")
+            continue
         
         # 3. Scarica dati e valida
         df = get_historical_data(ticker, years=config.YEARS_HISTORY)
