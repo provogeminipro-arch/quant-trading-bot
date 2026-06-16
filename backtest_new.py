@@ -30,12 +30,14 @@ def main():
                 data = yf.download(ticker, period='2y', interval='1d', end=yf_end_date, progress=False)
                 if data is None or len(data) < 200:
                     continue
+                if isinstance(data.columns, pd.MultiIndex):
+                    data.columns = data.columns.droplevel(1)
                 
                 # Test the core strategy on the data up to 'current_date'
                 result = test_strategy(data)
                 
                 if result is not None:
-                    win_rate, past_cases, buy_price, target_price = result
+                    win_rate, past_cases, buy_price, target_price, _ = result
                     print(f"  [+] Segnale MIGLIORATO: {ticker} a {buy_price}")
                     
                     # Stop loss logic (1 ATR) - calculate pure pandas ATR
@@ -53,6 +55,8 @@ def main():
                     
                     verify_end_date = (current_date + timedelta(days=8)).strftime('%Y-%m-%d')
                     future_data = yf.download(ticker, start=yf_end_date, end=verify_end_date, progress=False)
+                    if isinstance(future_data.columns, pd.MultiIndex):
+                        future_data.columns = future_data.columns.droplevel(1)
                     
                     esito = 'PERSO'
                     if len(future_data) > 0:
