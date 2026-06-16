@@ -4,19 +4,34 @@ import config
 import pandas as pd
 from google import genai
 
+def _call_gemini(prompt):
+    """Helper centralizzato per chiamare Gemini AI con il nuovo SDK google-genai."""
+    client = genai.Client(api_key=config.GEMINI_API_KEY)
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
+    ai_text = response.text.strip()
+    # Pulisci eventuali formattazioni markdown restituite dall'AI
+    if ai_text.startswith("```json"):
+        ai_text = ai_text[7:]
+    if ai_text.endswith("```"):
+        ai_text = ai_text[:-3]
+    ai_text = ai_text.strip()
+    return json.loads(ai_text)
+
 def get_macro_sentiment():
     """
     Scarica le ultime news da Finnhub e usa Gemini AI per valutarle.
-    Ritorna (True, "Motivo") se il mercato è buono per operare.
-    Ritorna (False, "Motivo") se c'è un crollo imminente o panico geopolitico.
+    Ritorna SEMPRE una tupla di 3 elementi: (bool, str, str)
+    - (True/False, "Motivo", "News Summary")
     """
     if not config.FINNHUB_API_KEY or not config.GEMINI_API_KEY:
         print("API Keys mancanti. Salto analisi macro.")
-        return True, "API Key non configurate"
+        return True, "API Key non configurate", "Nessuna notizia disponibile."
 
     # 1. Scarica le notizie generali del mercato americano tramite Finnhub
     try:
-        # 'general' category gives general market news
         url = f"https://finnhub.io/api/v1/news?category=general&token={config.FINNHUB_API_KEY}"
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -30,12 +45,10 @@ def get_macro_sentiment():
             
     except Exception as e:
         print(f"Errore durante il fetch delle notizie Finnhub: {e}")
-        return True, "Impossibile scaricare le notizie"
+        return True, "Impossibile scaricare le notizie", "Nessuna notizia disponibile."
 
     # 2. Usa Gemini AI per analizzare il sentiment
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
         prompt = f"""
         Agisci come un Risk Manager per un fondo di investimento azionario quantitativo (NASDAQ e S&P 500).
         Di seguito trovi le notizie finanziarie e geopolitiche di oggi:
@@ -51,17 +64,7 @@ def get_macro_sentiment():
         }}
         """
         
-        response = model.generate_content(prompt)
-        ai_text = response.text.strip()
-        # Pulisci eventuali formattazioni markdown restituite dall'AI
-        if ai_text.startswith("```json"):
-            ai_text = ai_text[7:]
-        if ai_text.endswith("```"):
-            ai_text = ai_text[:-3]
-        ai_text = ai_text.strip()
-        
-        import json
-        decision_data = json.loads(ai_text)
+        decision_data = _call_gemini(prompt)
         
         news_summary = decision_data.get("news_summary", "")
         
@@ -102,9 +105,6 @@ def get_ticker_sentiment(ticker):
         return True, "Impossibile scaricare le notizie del ticker."
 
     try:
-        genai.configure(api_key=config.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
         prompt = f"""
         Agisci come un analista fondamentale per un fondo quantitativo.
         L'algoritmo matematico ha appena rilevato un crollo di prezzo interessante per il titolo {ticker} e vorrebbe comprare (Mean-Reversion).
@@ -122,14 +122,7 @@ def get_ticker_sentiment(ticker):
         }}
         """
         
-        response = model.generate_content(prompt)
-        ai_text = response.text.strip()
-        if ai_text.startswith("```json"): ai_text = ai_text[7:]
-        if ai_text.endswith("```"): ai_text = ai_text[:-3]
-        ai_text = ai_text.strip()
-        
-        import json
-        decision_data = json.loads(ai_text)
+        decision_data = _call_gemini(prompt)
         
         if decision_data.get("decision") == "BLOCK":
             return False, decision_data.get("reason", "Notizie aziendali negative")

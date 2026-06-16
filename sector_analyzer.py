@@ -1,3 +1,4 @@
+import time
 import yfinance as yf
 import pandas as pd
 
@@ -31,8 +32,7 @@ def get_strong_sectors():
     
     for sector_name, etf_ticker in SECTOR_ETFS.items():
         try:
-            # Aggiungiamo una pausa per evitare di essere bloccati da Yahoo Finance
-            import time
+            # Pausa per evitare di essere bloccati da Yahoo Finance (FIX PERF 4: import spostato in cima)
             time.sleep(0.5)
             
             # Scarichiamo i dati con yfinance

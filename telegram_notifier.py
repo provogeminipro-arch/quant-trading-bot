@@ -24,7 +24,7 @@ def update_subscribers():
         subscribers.add(str(config.TELEGRAM_CHAT_ID))
         
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)  # FIX PERF 1: aggiunto timeout
         if response.ok:
             data = response.json()
             for result in data.get('result', []):
@@ -83,5 +83,6 @@ def send_general_message(text):
         }
         try:
             requests.post(url, json=payload, timeout=10)
-        except:
-            pass
+        except Exception as e:
+            # FIX RISK 2: logga l'errore invece di inghiottirlo
+            print(f"Errore invio messaggio generale a {chat_id}: {e}")

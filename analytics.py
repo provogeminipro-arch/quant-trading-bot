@@ -4,6 +4,16 @@ import csv
 from datetime import datetime
 import yfinance as yf
 
+def yfinance_download_safe(ticker, start, end):
+    """Download sicuro con gestione MultiIndex."""
+    try:
+        df = yf.download(ticker, start=start, end=end, progress=False)
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.droplevel(1)
+        return df
+    except:
+        return None
+
 def aggiorna_portafoglio():
     """
     Legge il registro_segnali.csv, individua i trade "scaduti" (passati 5 giorni solari dal segnale),
@@ -70,6 +80,11 @@ def aggiorna_portafoglio():
                 # Vogliamo solo i 5 giorni di borsa successivi alla data del segnale
                 df_storico = df_storico.iloc[1:6] # Il giorno 0 è il giorno del segnale, guardiamo i prossimi 5
                 
+                # FIX RISK 1: Controlliamo che lo slice non sia vuoto
+                if df_storico.empty:
+                    print(f"  Dati insufficienti per {ticker}, impossibile verificare l'esito.")
+                    continue
+                
                 vinto = False
                 for i in range(len(df_storico)):
                     high_price = float(df_storico.iloc[i]['High'])
@@ -78,7 +93,11 @@ def aggiorna_portafoglio():
                         break
                 
                 esito = "VINTO" if vinto else "PERSO"
-                prof_perc = ((target - buy_price) / buy_price * 100) if vinto else -((buy_price - df_storico.iloc[-1]['Close']) / buy_price * 100)
+                if vinto:
+                    prof_perc = (target - buy_price) / buy_price * 100
+                else:
+                    last_close = float(df_storico.iloc[-1]['Close'])
+                    prof_perc = -((buy_price - last_close) / buy_price * 100)
                 
                 nuovi_risultati.append([
                     row['Data'],
@@ -100,12 +119,3 @@ def aggiorna_portafoglio():
                 writer.writerow(['Data', 'Ticker', 'Win Rate Previsto', 'Esito Reale', 'Profitto/Perdita %'])
             for res in nuovi_risultati:
                 writer.writerow(res)
-
-def yfinance_download_safe(ticker, start, end):
-    try:
-        df = yf.download(ticker, start=start, end=end, progress=False)
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.droplevel(1)
-        return df
-    except:
-        return None

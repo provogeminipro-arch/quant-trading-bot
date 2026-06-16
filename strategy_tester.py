@@ -3,7 +3,7 @@ import numpy as np
 
 def test_strategy(df):
     """
-    Ritorna una tupla (win_rate, past_cases, buy_price, target_price) 
+    Ritorna una tupla (win_rate, past_cases, buy_price, target_price, features) 
     se c'è un segnale OGGI, altrimenti None.
     """
     df = df.copy()
@@ -33,9 +33,13 @@ def test_strategy(df):
     df['SMA_Volume'] = df['Volume'].rolling(window=20).mean()
     
     # 5. Bollinger Bands (20, 2)
-    sma_20 = df['Close'].rolling(window=20).mean()
+    df['SMA_20'] = df['Close'].rolling(window=20).mean()
     std_20 = df['Close'].rolling(window=20).std()
-    df['BB_Lower'] = sma_20 - (2 * std_20)
+    df['BB_Lower'] = df['SMA_20'] - (2 * std_20)
+    df['BB_Upper'] = df['SMA_20'] + (2 * std_20)
+    
+    # FIX BUG 6: BB_Width coerente con ml_trainer.py = (BB_Upper - BB_Lower) / SMA_20
+    df['BB_Width'] = (df['BB_Upper'] - df['BB_Lower']) / df['SMA_20']
     
     df = df.dropna()
     
@@ -45,6 +49,9 @@ def test_strategy(df):
     # Condizioni del trigger
     df['Prev_RSI'] = df['RSI'].shift(1)
     df['Prev_Low'] = df['Low'].shift(1)
+    
+    # Eliminiamo la prima riga che ha NaN dopo lo shift (FIX RISK 3)
+    df = df.iloc[1:]
     
     # 1. Prezzo sopra SMA 200 (Trend rialzista primario)
     # 2. Ieri RSI < 30 (Ipervenduto)
@@ -109,15 +116,12 @@ def test_strategy(df):
         row = df.iloc[-1]
         dist_sma = (row['Close'] - row['SMA_200']) / row['SMA_200']
         dist_bb = (row['Close'] - row['BB_Lower']) / row['BB_Lower']
-        sma_20 = row['Close'] # Approximation since we don't return SMA_20 exactly
-        # Let's just calculate BB_width here
-        sma_20 = row['Close'] # Just approximation for now, or recalculate:
-        bb_width = (df.iloc[-1]['Close'] - df.iloc[-1]['BB_Lower']) / df.iloc[-1]['Close']
         vol_ratio = row['Volume'] / (row['SMA_Volume'] + 1)
         
+        # FIX BUG 6: BB_Width ora è coerente con ml_trainer.py
         features = {
             'RSI': row['RSI'],
-            'BB_Width': bb_width,
+            'BB_Width': row['BB_Width'],
             'Dist_SMA200': dist_sma,
             'Dist_BBLower': dist_bb,
             'Volume_Ratio': vol_ratio

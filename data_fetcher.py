@@ -54,6 +54,10 @@ def get_historical_data(ticker, years=10):
         if df.empty:
             print(f"{ticker}: Dati vuoti.")
             return None
+        
+        # FIX BUG 5: Prima flatten le colonne MultiIndex, POI dropna
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = df.columns.droplevel(1)
             
         # Data validation
         # Circa 252 giorni di borsa in un anno
@@ -64,10 +68,6 @@ def get_historical_data(ticker, years=10):
             
         # Drop any row with NaN to ensure genuine data
         df = df.dropna()
-        
-        # Verifica se ci sono state colonne importate come MultiIndex (nuove versioni yfinance)
-        if isinstance(df.columns, pd.MultiIndex):
-            df.columns = df.columns.droplevel(1)
             
         return df
     except Exception as e:
