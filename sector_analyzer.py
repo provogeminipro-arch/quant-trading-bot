@@ -31,28 +31,53 @@ def get_strong_sectors():
     
     for sector_name, etf_ticker in SECTOR_ETFS.items():
         try:
+            # Aggiungiamo una pausa per evitare di essere bloccati da Yahoo Finance
+            import time
+            time.sleep(0.5)
+            
+            # Scarichiamo i dati con yfinance
             df = yf.download(etf_ticker, start=start_date, end=end_date, progress=False)
             
-            if df.empty or len(df) < 200:
+            if df is None or len(df) < 200:
                 print(f"  - {sector_name} ({etf_ticker}): Dati insufficienti")
                 continue
                 
+            # Estrazione sicura della colonna Close per evitare problemi con MultiIndex
             if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.droplevel(1)
+                try:
+                    close_series = df['Close', etf_ticker]
+                except KeyError:
+                    close_series = df['Close'].iloc[:, 0]
+            else:
+                close_series = df['Close']
                 
-            df['SMA_200'] = df['Close'].rolling(window=200).mean()
+            # Rimuoviamo eventuali NaN per essere sicuri
+            close_series = close_series.dropna()
             
-            df = df.dropna()
+            if len(close_series) < 200:
+                continue
+                
+            # Calcoliamo SMA 200
+            sma_200 = close_series.rolling(window=200).mean()
             
-            # Controllo dell'ultimo giorno disponibile
-            current_price = df['Close'].iloc[-1]
-            sma_200 = df['SMA_200'].iloc[-1]
+            # Prendiamo gli ultimi valori validi (rimuovendo i NaN creati dalla SMA)
+            valid_idx = sma_200.dropna().index
+            if len(valid_idx) == 0:
+                continue
+                
+            last_date = valid_idx[-1]
+            current_price = close_series.loc[last_date]
+            current_sma = sma_200.loc[last_date]
             
-            if current_price > sma_200:
-                print(f"  [+] {sector_name} ({etf_ticker}): FORTE (Prezzo {current_price:.2f} > SMA200 {sma_200:.2f})")
+            # Se il prezzo attuale è un Series o DataFrame a causa di stranezze, prendiamo il primo elemento
+            if isinstance(current_price, pd.Series): current_price = current_price.iloc[0]
+            if isinstance(current_sma, pd.Series): current_sma = current_sma.iloc[0]
+            
+            if float(current_price) > float(current_sma):
+                print(f"  [+] {sector_name} ({etf_ticker}): FORTE (Prezzo {current_price:.2f} > SMA200 {current_sma:.2f})")
                 strong_sectors.append(sector_name)
             else:
-                print(f"  [-] {sector_name} ({etf_ticker}): DEBOLE (Prezzo {current_price:.2f} < SMA200 {sma_200:.2f})")
+                print(f"  [-] {sector_name} ({etf_ticker}): DEBOLE (Prezzo {current_price:.2f} < SMA200 {current_sma:.2f})")
                 
         except Exception as e:
             print(f"  - {sector_name}: Errore durante l'analisi ({e})")
