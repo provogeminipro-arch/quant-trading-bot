@@ -34,7 +34,7 @@ def get_macro_sentiment():
     # 2. Usa Gemini AI per analizzare il sentiment
     try:
         genai.configure(api_key=config.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
         Agisci come un Risk Manager per un fondo di investimento azionario quantitativo (NASDAQ e S&P 500).
@@ -103,7 +103,7 @@ def get_ticker_sentiment(ticker):
 
     try:
         genai.configure(api_key=config.GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
         Agisci come un analista fondamentale per un fondo quantitativo.
