@@ -104,6 +104,25 @@ def test_strategy(df):
     if df.iloc[-1]['Trigger']:
         current_buy_price = df.iloc[-1]['Close']
         current_target_price = current_buy_price + (2.0 * df.iloc[-1]['ATR']) # Target raddoppiato (V4)
-        return win_rate, total_trades, current_buy_price, current_target_price
+        
+        # Estrai le features per il Machine Learning
+        row = df.iloc[-1]
+        dist_sma = (row['Close'] - row['SMA_200']) / row['SMA_200']
+        dist_bb = (row['Close'] - row['BB_Lower']) / row['BB_Lower']
+        sma_20 = row['Close'] # Approximation since we don't return SMA_20 exactly
+        # Let's just calculate BB_width here
+        sma_20 = row['Close'] # Just approximation for now, or recalculate:
+        bb_width = (df.iloc[-1]['Close'] - df.iloc[-1]['BB_Lower']) / df.iloc[-1]['Close']
+        vol_ratio = row['Volume'] / (row['SMA_Volume'] + 1)
+        
+        features = {
+            'RSI': row['RSI'],
+            'BB_Width': bb_width,
+            'Dist_SMA200': dist_sma,
+            'Dist_BBLower': dist_bb,
+            'Volume_Ratio': vol_ratio
+        }
+        
+        return win_rate, total_trades, current_buy_price, current_target_price, features
         
     return None

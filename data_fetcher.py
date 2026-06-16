@@ -10,7 +10,7 @@ def get_sp500_tickers():
         from io import StringIO
         url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
         headers = {'User-Agent': 'Mozilla/5.0'}
-        html = requests.get(url, headers=headers).text
+        html = requests.get(url, headers=headers, timeout=10).text
         table = pd.read_html(StringIO(html))
         df = table[0]
         tickers = df['Symbol'].tolist()
@@ -28,7 +28,7 @@ def get_sp500_with_sectors():
         from io import StringIO
         url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
         headers = {'User-Agent': 'Mozilla/5.0'}
-        html = requests.get(url, headers=headers).text
+        html = requests.get(url, headers=headers, timeout=10).text
         table = pd.read_html(StringIO(html))
         df = table[0]
         # Return a dictionary: {'AAPL': 'Information Technology', ...}

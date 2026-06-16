@@ -1,7 +1,8 @@
 import requests
-import google.generativeai as genai
+import json
 import config
 import pandas as pd
+from google import genai
 
 def get_macro_sentiment():
     """
@@ -17,7 +18,7 @@ def get_macro_sentiment():
     try:
         # 'general' category gives general market news
         url = f"https://finnhub.io/api/v1/news?category=general&token={config.FINNHUB_API_KEY}"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         news_data = response.json()
         
@@ -33,7 +34,6 @@ def get_macro_sentiment():
 
     # 2. Usa Gemini AI per analizzare il sentiment
     try:
-        genai.configure(api_key=config.GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = f"""
@@ -85,7 +85,7 @@ def get_ticker_sentiment(ticker):
 
     try:
         url = f"https://finnhub.io/api/v1/company-news?symbol={ticker}&from={(pd.Timestamp.now() - pd.DateOffset(days=3)).strftime('%Y-%m-%d')}&to={pd.Timestamp.now().strftime('%Y-%m-%d')}&token={config.FINNHUB_API_KEY}"
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         news_data = response.json()
         

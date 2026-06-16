@@ -65,7 +65,7 @@ def send_alert(ticker, win_rate, past_cases, buy_price, target_price, time_out_s
             "parse_mode": "HTML"
         }
         try:
-            requests.post(url, json=payload)
+            requests.post(url, json=payload, timeout=10)
         except Exception as e:
             print(f"Errore invio a {chat_id}: {e}")
             
@@ -82,6 +82,6 @@ def send_general_message(text):
             "parse_mode": "HTML"
         }
         try:
-            requests.post(url, json=payload)
+            requests.post(url, json=payload, timeout=10)
         except:
             pass

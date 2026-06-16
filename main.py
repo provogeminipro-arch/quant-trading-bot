@@ -11,7 +11,7 @@ from telegram_notifier import send_alert, send_general_message
 from macro_analyzer import get_macro_sentiment, get_ticker_sentiment
 from analytics import aggiorna_portafoglio
 from sector_analyzer import get_strong_sectors
-from analytics import aggiorna_portafoglio
+
 
 def main():
     print("Avvio trading bot (V2 Pro)...")
@@ -61,6 +61,16 @@ def main():
         
     tickers = list(ticker_sectors.keys())[:config.TOP_STOCKS_COUNT]
     
+    # 5. Caricamento modello ML (una sola volta)
+    model = None
+    model_path = 'ml_model.joblib'
+    if os.path.exists(model_path):
+        import joblib
+        model = joblib.load(model_path)
+        print("[AI] Modello ML caricato da disco.")
+    else:
+        print("[AI] Modello ML non trovato, verrà addestrato dinamicamente al primo segnale.")
+    
     segnali_trovati = 0
     
     for ticker in tickers:
@@ -85,32 +95,28 @@ def main():
             print(f"!!! SEGNALE TROVATO SU {ticker} !!!")
             print(f"Storico: {win_rate:.1f}% Win Rate su {past_cases} casi simili.")
             
-            # 5. Machine Learning Prediction
+            # 5. Machine Learning Prediction (using preloaded model)
             try:
-                import os
-                import joblib
-                from ml_trainer import train_model
-                
-                if not os.path.exists('ml_model.joblib'):
-                    print("\n[AI] Modello ML non trovato. Avvio addestramento dinamico sul Cloud...")
+                if model is None:
+                    # train on demand and load
+                    from ml_trainer import train_model
                     train_model()
+                    import joblib
+                    model = joblib.load(model_path)
                 
-                if os.path.exists('ml_model.joblib'):
-                    model = joblib.load('ml_model.joblib')
-                    # Prepara le feature nell'ordine giusto
-                    X_new = [[features['RSI'], features['BB_Width'], features['Dist_SMA200'], features['Dist_BBLower'], features['Volume_Ratio']]]
-                    
-                    import pandas as pd
-                    X_df = pd.DataFrame(X_new, columns=['RSI', 'BB_Width', 'Dist_SMA200', 'Dist_BBLower', 'Volume_Ratio'])
-                    
-                    prob_win = model.predict_proba(X_df)[0][1] # Probabilità della classe 1 (Vittoria)
-                    print(f"[AI] Probabilità predittiva di successo (Machine Learning): {prob_win*100:.1f}%")
-                    
-                    if prob_win < 0.60:
-                        print(f"Scartato dall'Intelligenza Artificiale (Probabilità < 60%).")
-                        continue
+                X_new = [[features['RSI'], features['BB_Width'], features['Dist_SMA200'], features['Dist_BBLower'], features['Volume_Ratio']]]
+                import pandas as pd
+                X_df = pd.DataFrame(X_new, columns=['RSI', 'BB_Width', 'Dist_SMA200', 'Dist_BBLower', 'Volume_Ratio'])
+                
+                prob_win = model.predict_proba(X_df)[0][1] # Probabilità della classe 1 (Vittoria)
+                print(f"[AI] Probabilità predittiva di successo (Machine Learning): {prob_win*100:.1f}%")
+                
+                if prob_win < 0.60:
+                    print(f"Scartato dall'Intelligenza Artificiale (Probabilità < 60%).")
+                    continue
             except Exception as e:
                 print(f"Errore durante l'analisi ML: {e}")
+                continue
                 
             # 6. Verifica filtro win rate storico
             if win_rate >= config.MIN_WIN_RATE:
