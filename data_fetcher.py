@@ -45,11 +45,15 @@ def get_sp500_with_sectors():
 def get_historical_data(ticker, years=10):
     """Scarica i dati storici validandone la completezza."""
     try:
+        import requests
+        session = requests.Session()
+        session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+        
         end_date = pd.Timestamp.now()
         start_date = end_date - pd.DateOffset(years=years)
         
-        # Download data
-        df = yf.download(ticker, start=start_date, end=end_date, progress=False)
+        # Download data with custom session to prevent blocks
+        df = yf.download(ticker, start=start_date, end=end_date, session=session, progress=False)
         
         if df.empty:
             print(f"{ticker}: Dati vuoti.")

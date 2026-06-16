@@ -1,6 +1,7 @@
 import time
 import yfinance as yf
 import pandas as pd
+import requests
 
 # Mappatura dei settori GICS con i rispettivi ETF americani principali
 SECTOR_ETFS = {
@@ -21,7 +22,7 @@ def get_strong_sectors():
     """
     Scarica i dati degli ETF settoriali e determina quali sono in trend rialzista.
     Un settore è considerato FORTE se il suo prezzo attuale è sopra la media mobile a 200 periodi (SMA 200).
-    Ritorna una lista dei nomi dei settori forti.
+    Ritorna una lista dei nomi dei settori forti. Se ci sono errori di connessione, ritorna None.
     """
     strong_sectors = []
     
@@ -30,17 +31,24 @@ def get_strong_sectors():
     end_date = pd.Timestamp.now()
     start_date = end_date - pd.DateOffset(years=2) # 2 anni per garantire la SMA 200
     
+    session = requests.Session()
+    session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'})
+    
+    valid_downloads = 0
+    
     for sector_name, etf_ticker in SECTOR_ETFS.items():
         try:
-            # Pausa per evitare di essere bloccati da Yahoo Finance (FIX PERF 4: import spostato in cima)
-            time.sleep(0.5)
+            # Pausa per evitare di essere bloccati da Yahoo Finance
+            time.sleep(1.0)
             
-            # Scarichiamo i dati con yfinance
-            df = yf.download(etf_ticker, start=start_date, end=end_date, progress=False)
+            # Scarichiamo i dati con yfinance usando la sessione personalizzata
+            df = yf.download(etf_ticker, start=start_date, end=end_date, session=session, progress=False)
             
             if df is None or len(df) < 200:
-                print(f"  - {sector_name} ({etf_ticker}): Dati insufficienti")
+                print(f"  - {sector_name} ({etf_ticker}): Dati insufficienti (len={len(df) if df is not None else 'None'})")
                 continue
+                
+            valid_downloads += 1
                 
             # Estrazione sicura della colonna Close per evitare problemi con MultiIndex
             if isinstance(df.columns, pd.MultiIndex):
@@ -82,8 +90,14 @@ def get_strong_sectors():
         except Exception as e:
             print(f"  - {sector_name}: Errore durante l'analisi ({e})")
             
+    if valid_downloads == 0:
+        return None
+        
     return strong_sectors
 
 if __name__ == "__main__":
     strong = get_strong_sectors()
-    print(f"\nSettori Forti totali: {len(strong)} / {len(SECTOR_ETFS)}")
+    if strong is None:
+        print("\nErrore: Nessun dato valido scaricato.")
+    else:
+        print(f"\nSettori Forti totali: {len(strong)} / {len(SECTOR_ETFS)}")

@@ -46,7 +46,12 @@ def main():
 
     # 1.5. Rotazione Settoriale
     strong_sectors = get_strong_sectors()
-    if not strong_sectors:
+    if strong_sectors is None:
+        print("Errore API: Impossibile scaricare i dati settoriali.")
+        send_general_message("⚠️ <b>ALLARME API:</b> Impossibile scaricare i dati da Yahoo Finance. Blocco preventivo per mancanza di dati.")
+        return
+        
+    if len(strong_sectors) == 0:
         print("NESSUN settore in trend rialzista! Mercato in crollo generale.")
         send_general_message("⚠️ <b>MERCATO DEBOLE:</b> Nessun settore è in trend rialzista (Tutti gli ETF sotto SMA200). Blocco acquisti azionari preventivo.")
         return
