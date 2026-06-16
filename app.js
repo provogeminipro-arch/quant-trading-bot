@@ -184,7 +184,7 @@ function renderPortfolioChart(labels, data) {
                         color: '#888899', 
                         font: { family: 'JetBrains Mono' },
                         callback: function(value) {
-                            return value + '%';
+                            return Number(value).toFixed(2) + '%';
                         }
                     }
                 },
