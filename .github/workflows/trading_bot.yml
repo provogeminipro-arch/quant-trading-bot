@@ -4,9 +4,8 @@ on:
   schedule:
     # Esegue lo script dal lunedì al venerdì (1-5) alle 19:45 UTC
     # 19:45 UTC corrisponde alle 15:45 a New York in estate (EDT) e 14:45 in inverno (EST).
-    # Per semplicità lo impostiamo alle 19:45, ma se vuoi coprire esattamente i 15 min prima della chiusura 
-    # invernale dovresti adattare il cron o gestire i fusi orari.
-    - cron: '45 19 * * 1-5'
+    # 20:00 UTC corrisponde alle 22:00 in Italia (orario estivo), poco dopo la chiusura di Wall Street
+    - cron: '0 20 * * 1-5'
   
   # Permette di avviare il workflow manualmente dal sito di GitHub per fare dei test
   workflow_dispatch:
@@ -16,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Scarica il codice del repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Installa Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
