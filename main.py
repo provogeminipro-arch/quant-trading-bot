@@ -13,10 +13,18 @@ from macro_analyzer import get_macro_sentiment, get_ticker_sentiment
 from analytics import aggiorna_portafoglio
 from sector_analyzer import get_strong_sectors
 
-def main():
+def run_bot():
     print("Avvio trading bot (V5 Institutional)...")
     now_it = datetime.now(pytz.timezone('Europe/Rome'))
     
+    # --- HEARTBEAT STARTUP ---
+    # Invia un messaggio subito all'avvio per rassicurare l'utente che GitHub Actions è partito
+    try:
+        startup_msg = f"🟢 <b>SYSTEM START</b>: Il bot si è avviato regolarmente ({now_it.strftime('%H:%M:%S')}) e sta iniziando l'analisi giornaliera..."
+        send_general_message(startup_msg)
+    except Exception as e:
+        print(f"Errore nell'invio del messaggio di startup: {e}")
+
     # 0. Aggiorna Portafoglio (controlla i trade passati)
     print("Aggiornamento Analytics e Portafoglio Virtuale...")
     aggiorna_portafoglio()
@@ -109,7 +117,7 @@ def main():
             print(f"!!! SEGNALE TROVATO SU {ticker} !!!")
             print(f"Storico: {win_rate:.1f}% Win Rate su {past_cases} casi simili.")
             
-            # 6. Machine Learning Prediction
+            # 6. Machine Learning Prediction (FIX BUG 7: non blocca più il flusso in caso di errore)
             ml_approved = True  # Default: se ML fallisce, prosegui comunque
             try:
                 if ml_model is None:
@@ -132,7 +140,7 @@ def main():
                         print(f"Scartato dall'Intelligenza Artificiale (Probabilità < 60%).")
                         ml_approved = False
             except Exception as e:
-                print(f"[AI] Errore durante l'analis ML (proseguo senza ML): {e}")
+                print(f"[AI] Errore durante l'analisi ML (proseguo senza ML): {e}")
             
             if not ml_approved:
                 time.sleep(config.PAUSE_BETWEEN_STOCKS)
@@ -189,8 +197,17 @@ def main():
             f"Ci aggiorniamo a domani! 💤"
         )
         send_general_message(report_msg)
-        
-    print("\nAnalisi completata!")
+
+def main():
+    try:
+        run_bot()
+    except Exception as e:
+        error_msg = f"❌ <b>ERRORE CRITICO</b> ❌\nIl bot si è bloccato a causa di un errore imprevisto:\n<code>{str(e)}</code>"
+        print(error_msg)
+        try:
+            send_general_message(error_msg)
+        except:
+            pass
 
 if __name__ == "__main__":
     main()
