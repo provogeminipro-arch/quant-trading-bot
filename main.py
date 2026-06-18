@@ -62,6 +62,7 @@ def main():
     ticker_sectors = get_sp500_with_sectors()
     if not ticker_sectors:
         print("Impossibile recuperare i ticker.")
+        send_general_message("⚠️ <b>ALLARME BOT:</b> Impossibile scaricare la lista delle aziende S&P 500 da Wikipedia. Bot arrestato.")
         return
         
     tickers = list(ticker_sectors.keys())[:config.TOP_STOCKS_COUNT]
@@ -95,15 +96,20 @@ def main():
             time.sleep(config.PAUSE_BETWEEN_STOCKS)
             continue
             
-        # 5. Testa strategia e calcola win rate
-        risultato = test_strategy(df)
+        # 5. Testa strategia e calcola win rate (protetto da try-except)
+        try:
+            risultato = test_strategy(df)
+        except Exception as e:
+            print(f"Errore durante l'elaborazione della strategia per {ticker}: {e}")
+            time.sleep(config.PAUSE_BETWEEN_STOCKS)
+            continue
         
         if risultato:
             win_rate, past_cases, buy_price, target_price, features = risultato
             print(f"!!! SEGNALE TROVATO SU {ticker} !!!")
             print(f"Storico: {win_rate:.1f}% Win Rate su {past_cases} casi simili.")
             
-            # 6. Machine Learning Prediction (FIX BUG 7: non blocca più il flusso in caso di errore)
+            # 6. Machine Learning Prediction
             ml_approved = True  # Default: se ML fallisce, prosegui comunque
             try:
                 if ml_model is None:
@@ -126,7 +132,7 @@ def main():
                         print(f"Scartato dall'Intelligenza Artificiale (Probabilità < 60%).")
                         ml_approved = False
             except Exception as e:
-                print(f"[AI] Errore durante l'analisi ML (proseguo senza ML): {e}")
+                print(f"[AI] Errore durante l'analis ML (proseguo senza ML): {e}")
             
             if not ml_approved:
                 time.sleep(config.PAUSE_BETWEEN_STOCKS)
