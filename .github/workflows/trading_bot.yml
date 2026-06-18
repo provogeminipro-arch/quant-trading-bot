@@ -2,12 +2,7 @@ name: Trading Bot Giornaliero
 
 on:
   schedule:
-    # Esegue lo script dal lunedì al venerdì (1-5) alle 19:45 UTC
-    # 19:45 UTC corrisponde alle 15:45 a New York in estate (EDT) e 14:45 in inverno (EST).
-    # 20:00 UTC corrisponde alle 22:00 in Italia (orario estivo), poco dopo la chiusura di Wall Street
     - cron: '0 20 * * 1-5'
-  
-  # Permette di avviare il workflow manualmente dal sito di GitHub per fare dei test
   workflow_dispatch:
 
 jobs:
@@ -27,7 +22,6 @@ jobs:
 
       - name: Esegui il Bot
         env:
-          # Le variabili segrete devono essere impostate nei "Secrets" di GitHub
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -39,5 +33,5 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add registro_segnali.csv portafoglio_virtuale.csv iscritti.json || true
-          git commit -m "🤖 Auto-aggiornamento dati bot" || true
+          git commit -m "Auto-aggiornamento dati bot" || true
           git push || true
